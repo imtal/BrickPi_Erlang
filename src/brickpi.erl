@@ -319,32 +319,61 @@ loop(S) ->
 encode({Msg}) ->
     <<$s,Msg:8,$e>>;
 %
-encode({Msg,Param1,Param2})     when Msg == ?M_SET_MOTOR_SPEED ->
+encode({Msg,Param1,Param2})         when Msg == ?M_SET_MOTOR_SPEED ->
     <<$s,Msg:8,Param1:16,Param2:16,$e>>;
 %
-encode({Msg,Param1,Param2})     when Msg == ?M_SET_MOTOR_ENABLE ->
+encode({Msg,Param1,Param2})         when Msg == ?M_SET_MOTOR_ENABLE ->
     <<$s,Msg:8,Param1:16,Param2:16,$e>>;
 %
-encode({Msg,Param1,Param2})     when Msg == ?M_SET_MOTOR_OFFSET ->
+encode({Msg,Param1,Param2})         when Msg == ?M_SET_MOTOR_OFFSET ->
     <<$s,Msg:8,Param1:16,Param2:32,$e>>;
 %
-encode({Msg,Param1})            when Msg == ?M_GET_MOTOR_ENCODER ->
+encode({Msg,Param1})                when Msg == ?M_GET_MOTOR_ENCODER ->
     <<$s,Msg:8,Param1:16,$e>>;
 %
-encode({Msg,Param1,Param2})     when Msg == ?M_SET_SENSOR_TYPE ->
+encode({Msg,Param1,Param2})         when Msg == ?M_SET_SENSOR_TYPE ->
     <<$s,Msg:8,Param1:16,Param2:16,$e>>;
 %
-encode({Msg,Param1,Param2})     when Msg == ?M_SET_SENSOR_SETTINGS ->
+encode({Msg,Param1,Param2})         when Msg == ?M_SET_SENSOR_SETTINGS ->
     % extend/restrict Param2 to 8 bytes
-    <<$s,Msg:8,Param1:16,Param2/bitstring,$e>>;
+    L = bit_size(Param2),
+    P = if  
+            L<64 -> <<Param2/bitstring,0:(64-L)>>;
+            true -> binary:part(Param2,0,8)
+        end,
+    <<$s,Msg:8,Param1:16,P/bitstring,$e>>;
 %
-encode({Msg,Param1})            when Msg == ?M_GET_SENSOR_VALUE ->
+encode({Msg,Param1})                when Msg == ?M_GET_SENSOR_VALUE ->
     <<$s,Msg:8,Param1:16,$e>>;
 %
-encode({Msg,Param1})            when Msg == ?M_SET_TIMEOUT ->
+encode({Msg,Param1,Param2})         when Msg == ?M_GET_SENSOR_EXT ->
+    <<$s,Msg:8,Param1:16,Param2:16,$e>>;
+%
+encode({Msg,Param1})                when Msg == ?M_SET_TIMEOUT ->
     <<$s,Msg:8,Param1:32,$e>>;
 %
-encode({Msg,Param1,Param2})     when Msg == ?M_CHANGE_ADDRESS ->
+encode({Msg,Param1,Param2})         when Msg == ?M_SET_SENSOR_I2C_DEVICES ->
+    <<$s,Msg:8,Param1:16,Param2:16,$e>>;
+%
+encode({Msg,Param1,Param2})         when Msg == ?M_SET_SENSOR_I2C_SPEED ->
+    <<$s,Msg:8,Param1:16,Param2:16,$e>>;
+%
+encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_I2C_ADDRESS ->
+    <<$s,Msg:8,Param1:16,Param2:16,Param3:16,$e>>;
+%
+encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_I2C_OUT ->
+    % extend/restrict Param3 to 16 bytes
+    L = bit_size(Param3),
+    P = if  
+            L<128 -> <<Param3/bitstring,0:(128-L)>>;
+            true  -> binary:part(Param3,0,16)
+        end,
+    <<$s,Msg:8,Param1:16,Param2:16,P/bitstring,$e>>;
+%
+encode({Msg,Param1,Param2})         when Msg == ?M_GET_SENSOR_I2C_IN ->
+    <<$s,Msg:8,Param1:16,Param2:16,$e>>;
+%
+encode({Msg,Param1,Param2})         when Msg == ?M_CHANGE_ADDRESS ->
     <<$s,Msg:8,Param1:16,Param2:16,$e>>;
 %
 encode(_Other) ->
