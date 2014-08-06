@@ -1,0 +1,9 @@
+{name, "brickpi"}.
+{vsn, {0,8}}.
+{summary, "Port driver for BrickPi."}.
+{author, "", "imtal@yolt.nl", "27 dec 2013"}.
+{keywords, ["NXT","BrickPi","Robotics"]}.
+{needs, []}.
+{abstract,"This is a port program with Erlang driver for the BrickPi."}.
+
+
