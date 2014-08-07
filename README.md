@@ -1,4 +1,4 @@
-BrickPi
+BrickPi Erlang
 ========
 
 Introduction
@@ -15,7 +15,7 @@ The driver is based on simple messages passing like for setting a motor speed, s
 
     's' CMD VALUE* 'e'
 
-The message command is given by one byte, values are transferred as binaries. Depending on the message short or long integers and arrays of 8 or 16 bytes are transferred. Based on this message format the following several functions are defined:
+The message command is given by one byte, values are transferred as binaries. Depending on the message `short` or `long` integers and arrays of 8 or 16 bytes are transferred. Based on this message format the following several functions are defined:
 
     change_address(From,To)
     set_timeout()

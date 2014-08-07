@@ -228,7 +228,11 @@ update() ->
 %%--------------------------------------------------------------------
 -spec brickpi:update(Interval::unsigned()) -> ok | {error,Reason::atom()}.
 update(Interval) ->
-    call({?M_UPDATE,Interval}).
+    I = case Interval of
+            0 -> infinity;
+            _Other -> Interval * 10
+        end,
+    call({interval,I}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -237,6 +241,7 @@ update(Interval) ->
 %%--------------------------------------------------------------------
 -spec brickpi:halt() -> ok | {error,Reason::atom()}.
 halt() ->
+    call({interval,infinity}),
     call({?M_HALT}).
 
 
@@ -250,7 +255,7 @@ call(Msg) ->
     receive
         {brickpi_driver, Result} -> Result
     after
-        20000 -> {timeout,Msg}
+        20000 -> {error,timeout}
     end.
 
 init(Parent) ->
@@ -266,32 +271,12 @@ init(Parent) ->
 
 loop(S) ->
     receive
-        {call, Caller, {?M_UPDATE,Interval}} ->
+        {call, Caller, {interval,Interval}} ->
             Caller ! {brickpi_driver, ok},
-            I = case Interval of
-                    0 -> infinity;
-                    _Other -> Interval * 10
-                end,
-            loop(S#state{ interval=I });
-        {call, Caller, {?M_HALT}} ->
-            Msg1 = encode({?M_HALT}),
-            Port = S#state.port,
-            Port ! {self(), {command, Msg1}},
-            receive
-                {Port, {data,Data}} -> Caller ! {brickpi_driver, decode(Data)}
-            after
-                S#state.timeout -> Caller ! {brickpi_driver, timeout}
-            end,
-            loop(S#state{ interval=infinity });
+            loop(S#state{ interval=Interval });
         {call, Caller, Msg} ->
-            Msg1 = encode(Msg),
-            Port = S#state.port,
-            Port ! {self(), {command, Msg1}},
-            receive
-                {Port, {data,Data}} -> Caller ! {brickpi_driver, decode(Data)}
-            after
-                S#state.timeout -> Caller ! {brickpi_driver, timeout}
-            end,
+            Response = call_driver(S#state.port,Msg,S#state.timeout),
+            Caller ! {brickpi_driver, Response},
             loop(S);
         stop ->
             Port = S#state.port,
@@ -304,17 +289,19 @@ loop(S) ->
             exit({terminated,Reason})
     after
         S#state.interval ->
-            Port = S#state.port,
-            Msg1 = encode({?M_UPDATE}),
-            Port ! {self(), {command, Msg1}},
-            receive
-                {Port, {data,_Data}} -> loop(S)
-            after
-                S#state.timeout -> exit(timeout)
-            end,
+            call_driver(S#state.port,{?M_UPDATE},S#state.timeout),
             loop(S)
     end.
 
+call_driver(Port,Msg,Timeout) ->
+    Port ! {self(), {command, encode(Msg)}},
+    receive
+        {Port, {data,Data}} -> decode(Data)
+    after
+        Timeout -> {error,timeout}
+    end.
+
+    
 % -------------------
 encode({Msg}) ->
     <<$s,Msg:8,$e>>;
@@ -403,5 +390,4 @@ decode(<<?MSG_START:8,?R_ERROR:8,Code:8,?MSG_END:8>>) ->
         Else                  -> {error,Else}
     end;
 decode(_Other) ->
-    X = io_lib:format("~p",[_Other]),
-    {bad_response,X}.
+    {error,bad_response}.
