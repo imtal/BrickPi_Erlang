@@ -9,13 +9,9 @@ Therefore I made an alternative driver based on the C-sources for the BrickPi. C
 
 This way not the whole data structure needs to be exchanged between Erlang and the port driver. After the sensor and motor initialization parameters a setup message can be sent. After that subsequent update messages can be issued for  the synchronization. Before and after each update the values can be set or read.
 
-Message structure
+Usage
 -----
-The driver is based on simple messages passing like for setting a motor speed, setting a sensor mode, etc. The overall message format for messages and responses between the Raspberry and the BrickPi is like this:
-
-    's' CMD VALUE* 'e'
-
-The message command is given by one byte, values are transferred as binaries. Depending on the message `short` or `long` integers and arrays of 8 or 16 bytes are transferred. Based on this message format the following several functions are defined:
+The BrickPi driver for Erlang defined the following functions, which alter parts of the data structure or are equivalents of the C functions. 
 
     change_address(From,To)
     set_timeout()
@@ -43,11 +39,15 @@ The message command is given by one byte, values are transferred as binaries. De
 
 Using update with an interval enables automatic updates. Using an interval of zero disables it again. The `halt()` function immediately halts all motors and also stops automatic updates. 
 
-Usage
+Installation
 --------
 Get the sources and place them in a directory of choice. In order to compile and install issue the following commands:
 
+    $ wget https://github.com/imtal/BrickPi_Erlang/archive/master.zip
+    $ unzip master.zip
+    $ mv BrickPi_Erlang-master BrickPi_Erlang
     $ cd BrickPi_Erlang
+    BrickPi_Erlang $ make
     BrickPi_Erlang $ make
     BrickPi_Erlang $ sudo make install
     
@@ -74,6 +74,14 @@ The first example is a simple example where the instructions to the BrickPi are 
         brickpi:stop().
 
 (More exmaples to follow.)
+
+Internals
+--------
+The port driver is implemented using the BrickPi_C library. The port driver is based on simple messages passing like for setting a motor speed, setting a sensor mode, etc. The overall message format for messages and responses between the Raspberry and the BrickPi is like this:
+
+    's' CMD VALUE* 'e'
+
+The message command is given by one byte, values are transferred as binaries. Depending on the message `short` or `long` integers and arrays of 8 or 16 bytes are transferred. 
 
 Language bindings
 --------
