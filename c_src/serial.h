@@ -80,7 +80,7 @@ int serial_scan(const int fd) {
     return result ;
 }
 
-int serail_getchar(const int fd) {
+int serial_getchar(const int fd) {
     unsigned char x;
     if (read(fd,&x,1)!=1) return -1;
     return ((int)x) & 0xFF;
