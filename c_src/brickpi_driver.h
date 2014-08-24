@@ -10,7 +10,6 @@ typedef unsigned char byte;
 // protocol definitions
 #define MSG_START 's'
 #define MSG_END   'e'
-#define MSG_SEP   ';'
 
 // message types
 #define M_CHANGE_ADDRESS              'A'
