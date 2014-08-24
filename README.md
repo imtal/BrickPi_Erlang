@@ -48,7 +48,6 @@ Get the sources and place them in a directory of choice. In order to compile and
     $ mv BrickPi_Erlang-master BrickPi_Erlang
     $ cd BrickPi_Erlang
     BrickPi_Erlang $ make
-    BrickPi_Erlang $ make
     BrickPi_Erlang $ sudo make install
     
 The files are installed under `/usr/lib/erlang/lib`, so they are automatically found from within Erlang (use `code:which(brickpi)` to check from the `erl` command line). Additionally tests can be run and documentation can be generated:
@@ -66,9 +65,11 @@ The first example is a simple example where the instructions to the BrickPi are 
         brickpi:start(),
         brickpi:motor_speed(?PORT_A,-200),
         brickpi:motor_speed(?PORT_B,-200),
+        brickpi:update(),
         brickpi:sleep(3000),
         brickpi:motor_speed(?PORT_A,200),
         brickpi:motor_speed(?PORT_B,200),
+        brickpi:update(),
         brickpi:sleep(3000),
         brickpi:halt(),
         brickpi:stop().
