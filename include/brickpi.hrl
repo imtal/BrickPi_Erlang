@@ -66,6 +66,7 @@
 -define(E_SETUP,                       $S).
 -define(E_UPDATE,                      $U).
 -define(E_ADDRESS,                     $A).
+-define(E_TIMEOUT,                     $T).
 -define(E_INVALID_COMMAND,             $i).
 -define(E_PROTOCOL_ERROR,              $P).
 -define(E_BUFFER_OVERFLOW,             $O).

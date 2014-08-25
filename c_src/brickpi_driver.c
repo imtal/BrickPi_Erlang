@@ -145,7 +145,11 @@ receive_command() {
                 if (read_end()) {
                     LOG("- Set timeout to %u\r\n",timeout);
                     BrickPi.Timeout = timeout;
-                    send_ok();
+                    if (BrickPiSetTimeout()) {
+                        send_error(E_TIMEOUT);
+                    } else {
+                        send_ok();
+                    }
                 } else {
                     send_error(E_PROTOCOL_ERROR);
                 }
@@ -409,11 +413,15 @@ main() {
         send_error(E_LOAD);
     } else {
         LOG("\n\r- Loaded brickpi_driver version %s\n\r",VERSION);
-        BrickPi.Timeout=100000;
         BrickPi.Address[0] = 1;
         BrickPi.Address[1] = 2;
-        while (1) {
-            receive_command();
+        BrickPi.Timeout=5000; // motors run five seconds by default
+        if (BrickPiSetTimeout()) {
+            send_error(E_TIMEOUT);
+        } else {
+            while (1) {
+                receive_command();
+            }
         }
     }
 }
