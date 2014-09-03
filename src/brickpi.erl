@@ -260,17 +260,21 @@ update() ->
 %%--------------------------------------------------------------------
 %% @doc
 %% Starts or stops the automatic update the values of the BrickPi.
-%% An interval higher of 0 stops the automatic update, a value higher than
-%% zero starts in in steps of 10ms.
+%% An interval of 0 stops the automatic update, a value higher than
+%% zero starts automatic updates using this interval in milliseconds.
+%% An interval smaller than 10ms generates an error
 %% @end
 %%--------------------------------------------------------------------
 -spec brickpi:update(Interval::unsigned()) -> ok | {error,Reason::atom()}.
 update(Interval) ->
-    I = case Interval of
-            0 -> infinity;
-            _Other -> Interval * 10
-        end,
-    call({interval,I}).
+    case Interval of
+		0 -> 
+			call({interval,infinity});
+		I when I<10 ->
+			{error,interval_too_small};
+		I -> 
+			call({interval,I})
+    end.
 
 %%--------------------------------------------------------------------
 %% @doc
