@@ -33,7 +33,15 @@
             parent = undefined,
             port = undefined,
             timeout = 20000,
-            interval = infinity
+            interval = infinity,
+            monitors = []
+        }).
+
+-record(monitor,{
+            type = undefined,
+            port = undefined,
+            message = undefined,
+            handler = undefined
         }).
 
 %%--------------------------------------------------------------------
@@ -109,6 +117,21 @@ set_sensor_settings(Port,Value) ->
 -spec brickpi:get_sensor_value(Port::unsigned()) -> ok | {error,Reason::atom()}.
 get_sensor_value(Port) ->
     call({?M_GET_SENSOR_VALUE,Port}).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Sets automatic monitoring of a sensor value 
+%% and sends messages when this value changes. Without passing a handler  
+%% pid the messages are sent tio the calling process. 
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:set_sensor_monitor(Port::unsigned()) -> ok | {error,Reason::atom()}.
+set_sensor_monitor(Port) ->
+    call({monitor,sensor_value,Port,{?M_GET_SENSOR_VALUE,Port},self()}).
+
+-spec brickpi:set_sensor_monitor(Port::unsigned(),Handler::pid()) -> ok | {error,Reason::atom()}.
+set_sensor_monitor(Port,Handler) ->
+    call({monitor,sensor_value,Port,{?M_GET_SENSOR_VALUE,Port},Handler}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -202,6 +225,21 @@ get_motor_encoder(Port) ->
 
 %%--------------------------------------------------------------------
 %% @doc
+%% Sets automatic monitoring of a motor encoder value 
+%% and sends messages when this value changes. Without passing a handler  
+%% pid the messages are sent tio the calling process. 
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:set_motor_monitor(Port::unsigned()) -> ok | {error,Reason::atom()}.
+set_motor_monitor(Port) ->
+    call({monitor,motor_encoder,Port,{?M_GET_MOTOR_ENCODER,Port},self()}).
+
+-spec brickpi:set_motor_monitor(Port::unsigned(),Handler::pid()) -> ok | {error,Reason::atom()}.
+set_motor_monitor(Port,Handler) ->
+    call({monitor,motor_encoder,Port,{?M_GET_MOTOR_ENCODER,Port},Handler}).
+
+%%--------------------------------------------------------------------
+%% @doc
 %% Initialize the sensors with the given values.
 %% @end
 %%--------------------------------------------------------------------
@@ -274,6 +312,11 @@ loop(S) ->
         {call, Caller, {interval,Interval}} ->
             Caller ! {brickpi_driver, ok},
             loop(S#state{ interval=Interval });
+        {call, Caller, {monitor,Type,Port,Msg,Handler}} ->
+            M = #monitor{ type=Type, port=Port, message=Msg, handler=Handler },
+            L = S#state.monitors,
+            Caller ! {brickpi_driver, ok},
+            loop(S#state{ monitors=[M|L] });
         {call, Caller, Msg} ->
             Response = call_driver(S#state.port,Msg,S#state.timeout),
             Caller ! {brickpi_driver, Response},
@@ -290,6 +333,15 @@ loop(S) ->
     after
         S#state.interval ->
             call_driver(S#state.port,{?M_UPDATE},S#state.timeout),
+            F = fun(M) ->
+                    case call_driver(S#state.port,M#monitor.message,S#state.timeout) of
+                        {ok,Value} ->
+                            M#monitor.handler ! {M#monitor.type, M#monitor.port, Value};
+                        _Other ->
+                            M#monitor.handler ! {M#monitor.type, M#monitor.port, error}
+                    end
+                end,
+            lists:foreach(F,S#state.monitors),
             loop(S)
     end.
 
