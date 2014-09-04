@@ -59,9 +59,9 @@ Examples
 --------
 The first example is a simple example where the instructions to the BrickPi are given in a sequential order.
 
--module(example1).
--compile(export_all).
--include("include/brickpi.hrl").
+	-module(example1).
+	-compile(export_all).
+	-include("include/brickpi.hrl").
 
 	start() ->
 		brickpi:start(),
