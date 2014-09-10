@@ -1,6 +1,6 @@
 
 #define VERSION "0.8"
-#define SHOW_LOG 1
+//#define SHOW_LOG 1
 
 typedef unsigned char byte;
 
@@ -89,4 +89,6 @@ void htob(char* in, char* out, int max);
 
 #ifdef SHOW_LOG
 #define LOG(...)    fprintf(stderr,__VA_ARGS__)
+#else
+#define LOG(...)
 #endif
