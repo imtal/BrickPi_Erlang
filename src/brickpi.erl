@@ -24,7 +24,7 @@
 
 -export([start/0,stop/0,sleep/1]).
 -export([change_address/2,set_timeout/1]).
--export([set_sensor_type/2,set_sensor_settings/2,get_sensor_value/1,get_sensor_ext/2]).
+-export([set_sensor_type/2,set_sensor_settings/3,get_sensor_value/1,get_sensor_ext/2]).
 -export([set_sensor_i2c_devices/2,set_sensor_i2c_speed/2,set_sensor_i2c_address/3,set_sensor_i2c_out/3,get_sensor_i2c_in/2]).
 -export([set_motor_enable/2,set_motor_speed/2,set_motor_offset/2,get_motor_encoder/1]).
 -export([setup/0,update/0,update/1,halt/0]).
@@ -101,13 +101,13 @@ set_sensor_type(Port,Value) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets the sensor settings for the specfied port. The settings are given
-%% as a binary with a maximum length of 8 bytes.
+%% Sets the sensor settings for the specfied I2C device on the specified port. 
+%% The settings should be given as an unsigned of which only 8 bits are used.
 %% @end
 %%--------------------------------------------------------------------
--spec brickpi:set_sensor_settings(Port::unsigned(),Value::binary()) -> ok | {error,Reason::atom()}.
-set_sensor_settings(Port,Value) ->
-    call({?M_SET_SENSOR_SETTINGS,Port,Value}).
+-spec brickpi:set_sensor_settings(Port::unsigned(),Device::unsigned(),Value::unsigned()) -> ok | {error,Reason::atom()}.
+set_sensor_settings(Port,Device,Value) ->
+    call({?M_SET_SENSOR_SETTINGS,Port,Device,Value}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -377,14 +377,8 @@ encode({Msg,Param1})                when Msg == ?M_GET_MOTOR_ENCODER ->
 encode({Msg,Param1,Param2})         when Msg == ?M_SET_SENSOR_TYPE ->
     <<$s,Msg:8,Param1:16,Param2:16,$e>>;
 %
-encode({Msg,Param1,Param2})         when Msg == ?M_SET_SENSOR_SETTINGS ->
-    % extend/restrict Param2 to 8 bytes
-    L = bit_size(Param2),
-    P = if  
-            L<64 -> <<Param2/bitstring,0:(64-L)>>;
-            true -> binary:part(Param2,0,8)
-        end,
-    <<$s,Msg:8,Param1:16,P/bitstring,$e>>;
+encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_SETTINGS ->
+    <<$s,Msg:8,Param1:16,Param2:16,Param3:16,$e>>;
 %
 encode({Msg,Param1})                when Msg == ?M_GET_SENSOR_VALUE ->
     <<$s,Msg:8,Param1:16,$e>>;

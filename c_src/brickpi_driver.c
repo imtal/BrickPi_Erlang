@@ -47,17 +47,23 @@ char read_command() {
     return buffer[0];
 }
 
+short read_byte() {
+    uint8_t value;
+    if (read(STDIN_FILENO,buffer,sizeof(uint8_t))<=0) unload();
+    memcpy(&value,buffer,sizeof(uint8_t));
+    return ntohs(value);
+}
 short read_short() {
     uint16_t value;
-    if (read(STDIN_FILENO,buffer,sizeof(short))<=0) unload();
-    memcpy(&value,buffer,sizeof(short));
+    if (read(STDIN_FILENO,buffer,sizeof(uint16_t))<=0) unload();
+    memcpy(&value,buffer,sizeof(uint16_t));
     return ntohs(value);
 }
 
 long read_long() {
     uint32_t value;
-    if (read(STDIN_FILENO,buffer,sizeof(long))<=0) unload();
-    memcpy(&value,buffer,sizeof(long));
+    if (read(STDIN_FILENO,buffer,sizeof(uint32_t))<=0) unload();
+    memcpy(&value,buffer,sizeof(uint32_t));
     return ntohl(value);
 }
 
@@ -224,13 +230,15 @@ receive_command() {
                 break;
             }
             case M_SET_SENSOR_SETTINGS: {
-                short port;
-                char settings[8];
-                read_bytes(settings,8);
+                short port,device,settings;
+                port = read_short();
+                device = read_short();
+                settings = read_short();
                 if (read_end()) {
                     if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    LOG("- Set sensor %i settings \"%s\"\r\n",port,settings);
-                    memcpy(BrickPi.SensorSettings[port],settings,8);
+                    if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    LOG("- Set on sensor port %i, on I2C device %i the settings to %i\r\n",port,device,settings);
+                    BrickPi.SensorSettings[port][device] = settings;
                     send_ok();
                 } else {
                     send_error(E_PROTOCOL_ERROR);
