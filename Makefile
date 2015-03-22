@@ -11,7 +11,7 @@ FULL_INSTALL_DIR=$(DESTDIR)/erlang/lib/$(INSTALL_DIR)
 DOC_OPTS = {dir,\"./doc\"}
 WARNING_OPTIONS =
 LANGUAGE_OPTIONS = 
-COMPILER_OPTIONS = -g 
+COMPILER_OPTIONS = -g
 
 CFLAGS   = $(WARNING_OPTIONS) $(LANGUAGE_OPTIONS) $(COMPILER_OPTIONS)
 
@@ -73,7 +73,7 @@ edoc:
 		-eval "edoc:application($(APPLICATION), \"./src\", [$(DOC_OPTS)])"\
 		-s init stop
 
-tests:
+tests: all
 	erlc -I include -o test test/testset.erl
 	erl -pa test ebin -run testset -noshell
 	@echo Ignored: python test/testset.py
