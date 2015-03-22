@@ -59,65 +59,65 @@ Examples
 --------
 The first example is a simple example where the instructions to the BrickPi are given in a sequential order.
 
-	-module(example1).
-	-compile(export_all).
-	-include("include/brickpi.hrl").
+    -module(example1).
+    -compile(export_all).
+    -include("include/brickpi.hrl").
 
-	start() ->
-		brickpi:start(),
-		brickpi:set_motor_enable(?PORT_A,1),
-		brickpi:set_motor_enable(?PORT_B,1),
-		brickpi:set_motor_speed(?PORT_A,-200),
-		brickpi:set_motor_speed(?PORT_B,-200),
-		brickpi:update(),
-		brickpi:sleep(3000),
-		brickpi:set_motor_speed(?PORT_A,200),
-		brickpi:set_motor_speed(?PORT_B,200),
-		brickpi:update(),
-		brickpi:sleep(3000),
-		brickpi:halt(),
-		brickpi:stop().
+    start() ->
+        brickpi:start(),
+        brickpi:set_motor_enable(?PORT_A,1),
+        brickpi:set_motor_enable(?PORT_B,1),
+        brickpi:set_motor_speed(?PORT_A,-200),
+        brickpi:set_motor_speed(?PORT_B,-200),
+        brickpi:update(),
+        brickpi:sleep(3000),
+        brickpi:set_motor_speed(?PORT_A,200),
+        brickpi:set_motor_speed(?PORT_B,200),
+        brickpi:update(),
+        brickpi:sleep(3000),
+        brickpi:halt(),
+        brickpi:stop().
 
 The second example used the module's builtin monitoring function for sensor values. The use case is a motor that runs continuisly but stops when a sensor reached a specific value. Also the motor encoder is read and when a maximum value is reached the motor reverses until a minimum level is reached so it advances again. This example shows how control can be done in a more Erlang way.
 
-	-module(example2).
-	-compile(export_all).
-	-include("include/brickpi.hrl").
+    -module(example2).
+    -compile(export_all).
+    -include("include/brickpi.hrl").
 
-	start() ->
-		Handler = spawn_link(?MODULE,init,[]), 
-		brickpi:sleep(10000), % run excercise for 10 seconds
-		Handler ! stop,
-		brickpi:sleep(1000). % wait for another second
+    start() ->
+        Handler = spawn_link(?MODULE,init,[]),
+        brickpi:sleep(10000), % run excercise for 10 seconds
+        Handler ! stop,
+        brickpi:sleep(1000). % wait for another second
 
-	init() ->
-		brickpi:start(), 
-		brickpi:set_timeout(3000), % motors run for 3 seconds max
-		brickpi:set_motor_enable(?PORT_A,1), 
-		brickpi:update(), 
-		{ok,Offset} = brickpi:get_motor_encoder(?PORT_A), 
-		brickpi:set_motor_speed(?PORT_A,200), 
-		brickpi:set_motor_monitor(?PORT_A), 
-		brickpi:update(100), % update every 100ms
-		loop(Offset).
+    init() ->
+        brickpi:start(),
+        brickpi:set_timeout(3000), % motors run for 3 seconds max
+        brickpi:set_motor_enable(?PORT_A,1),
+        brickpi:update(),
+        {ok,Offset} = brickpi:get_motor_encoder(?PORT_A),
+        brickpi:set_motor_speed(?PORT_A,200),
+        brickpi:set_motor_monitor(?PORT_A),
+        brickpi:update(100), % update every 100ms
+        loop(Offset).
 
-	loop(Offset) ->
-		receive
-			{motor_encoder,?PORT_A,Value} when Value-Offset>500 ->
-				% reverse
-				brickpi:set_motor_speed(?PORT_A,-200),
-				loop(Offset);
-			{motor_encoder,?PORT_A,Value} when Value-Offset<0 ->
-				% forward
-				brickpi:set_motor_speed(?PORT_A,200),
-				loop(Offset);
-			stop ->
-				brickpi:halt(), 
-				brickpi:stop();			
-			_Other ->
-				loop(Offset)
-		end.
-    
+    loop(Offset) ->
+        receive
+            {motor_encoder,?PORT_A,Value} when Value-Offset>500 ->
+                % reverse
+                brickpi:set_motor_speed(?PORT_A,-200),
+                loop(Offset);
+            {motor_encoder,?PORT_A,Value} when Value-Offset<0 ->
+                % forward
+                brickpi:set_motor_speed(?PORT_A,200),
+                loop(Offset);
+            stop ->
+                brickpi:halt(),
+                brickpi:stop();
+            _Other ->
+                loop(Offset)
+        end.
+
 Internals
 --------
 The port driver is implemented using the BrickPi_C library. The port driver is based on simple messages passing like for setting a motor speed, setting a sensor mode, etc. The overall message format for messages and responses between the Raspberry and the BrickPi is like this:
@@ -126,13 +126,6 @@ The port driver is implemented using the BrickPi_C library. The port driver is b
 
 The message command is given by one byte, values are transferred as binaries. Depending on the message `short` or `long` integers and arrays of 8 or 16 bytes are transferred.
 
-Language bindings
---------
-Because the interface specification is quite simple it is easy to reuse this driver in different languages. The following language bindings are at this moment available for the BrickPiA driver.
-
-**Erlang** - This was what it was all about. A very interesting language for robotics and therefore the initial implementation. Uses a port driver to communicate with the BrickPi.
-
-**Python** - Because Python is the most used language on the Raspberry, a Pyhton  binding to the drive is added. This binding is not yet complete.
 
 See also
 --------
