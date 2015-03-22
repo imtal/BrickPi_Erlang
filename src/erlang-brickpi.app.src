@@ -1,5 +1,5 @@
 %% ex: ft=erlang
-{application, 'brickpi-erlang',
+{application, 'erlang-brickpi',
     [{description,"Erlang port driver for BrickPi"},
      {vsn,"0.8"},
      {registered,[]},
