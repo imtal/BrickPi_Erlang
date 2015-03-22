@@ -41,6 +41,8 @@
 -define(M_SET_SENSOR_I2C_DEVICES,      $D).
 -define(M_SET_SENSOR_I2C_SPEED,        $B).
 -define(M_SET_SENSOR_I2C_ADDRESS,      $N).
+-define(M_SET_SENSOR_I2C_WRITE,        $w).
+-define(M_SET_SENSOR_I2C_READ,         $r).
 -define(M_SET_SENSOR_I2C_OUT,          $O).
 -define(M_GET_SENSOR_I2C_IN,           $I).
 % motor

@@ -6,6 +6,7 @@
 -export([start/0]).
 
 start() ->
+	io:format("Loaded library from ~p~n",[code:which(brickpi)]),
     {ok,_Pid} = brickpi:start(),
     ok = brickpi:set_sensor_type(?PORT_1,?TYPE_SENSOR_RAW),
     ok = brickpi:setup(),

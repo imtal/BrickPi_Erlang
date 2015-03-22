@@ -16,7 +16,7 @@
 %%% @end
 
 -module(brickpi).
--vsn('0.8').
+-vsn('0.81').
 
 -include("brickpi.hrl").
 
@@ -24,8 +24,8 @@
 
 -export([start/0,stop/0,sleep/1]).
 -export([change_address/2,set_timeout/1]).
--export([set_sensor_type/2,set_sensor_settings/3,get_sensor_value/1,get_sensor_ext/2]).
--export([set_sensor_i2c_devices/2,set_sensor_i2c_speed/2,set_sensor_i2c_address/3,set_sensor_i2c_out/3,get_sensor_i2c_in/2]).
+-export([set_sensor_type/2,set_sensor_i2c_settings/3,get_sensor_value/1,get_sensor_ext/2]).
+-export([set_sensor_i2c_devices/2,set_sensor_i2c_speed/2,set_sensor_i2c_address/3,set_sensor_i2c_write/3,set_sensor_i2c_read/3,set_sensor_i2c_out/3,get_sensor_i2c_in/2]).
 -export([set_motor_enable/2,set_motor_speed/2,set_motor_offset/2,get_motor_encoder/1]).
 -export([setup/0,update/0,update/1,halt/0]).
 
@@ -105,8 +105,8 @@ set_sensor_type(Port,Value) ->
 %% The settings should be given as an unsigned of which only 8 bits are used.
 %% @end
 %%--------------------------------------------------------------------
--spec brickpi:set_sensor_settings(Port::unsigned(),Device::unsigned(),Value::unsigned()) -> ok | {error,Reason::atom()}.
-set_sensor_settings(Port,Device,Value) ->
+-spec brickpi:set_sensor_i2c_settings(Port::unsigned(),Device::unsigned(),Value::unsigned()) -> ok | {error,Reason::atom()}.
+set_sensor_i2c_settings(Port,Device,Value) ->
     call({?M_SET_SENSOR_SETTINGS,Port,Device,Value}).
 
 %%--------------------------------------------------------------------
@@ -171,6 +171,26 @@ set_sensor_i2c_address(Port,Device,Address) ->
 
 %%--------------------------------------------------------------------
 %% @doc
+%% Sets the amount of bytes that are sent to 
+%% the specified I2C device on the specified sensor port.
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:set_sensor_i2c_write(Port::unsigned(),Device::unsigned(),Count::unsigned()) -> ok | {error,Reason::atom()}.
+set_sensor_i2c_write(Port,Device,Count) ->
+    call({?M_SET_SENSOR_I2C_WRITE,Port,Device,Count}).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Sets the amount of bytesthat are read from
+%% the specified I2C device on the specified sensor port.
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:set_sensor_i2c_read(Port::unsigned(),Device::unsigned(),Count::unsigned()) -> ok | {error,Reason::atom()}.
+set_sensor_i2c_read(Port,Device,Count) ->
+    call({?M_SET_SENSOR_I2C_READ,Port,Device,Count}).
+
+%%--------------------------------------------------------------------
+%% @doc
 %% Sends the data to the specified I2C device on the specified sensor port.
 %% @end
 %%--------------------------------------------------------------------
@@ -180,10 +200,10 @@ set_sensor_i2c_out(Port,Device,Output) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets the address of the specified I2C device on the specified sensor port.
+%% Reads the data from the specified I2C device on the specified sensor port.
 %% @end
 %%--------------------------------------------------------------------
--spec brickpi:get_sensor_i2c_in(Port::unsigned(),Device::unsigned()) -> ok | {error,Reason::atom()}.
+-spec brickpi:get_sensor_i2c_in(Port::unsigned(),Device::unsigned()) -> {ok,Value::binary()} | {error,Reason::atom()}.
 get_sensor_i2c_in(Port,Device) ->
     call({?M_GET_SENSOR_I2C_IN,Port,Device}).
 
@@ -396,6 +416,12 @@ encode({Msg,Param1,Param2})         when Msg == ?M_SET_SENSOR_I2C_SPEED ->
     <<$s,Msg:8,Param1:16,Param2:16,$e>>;
 %
 encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_I2C_ADDRESS ->
+    <<$s,Msg:8,Param1:16,Param2:16,Param3:16,$e>>;
+%
+encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_I2C_WRITE ->
+    <<$s,Msg:8,Param1:16,Param2:16,Param3:16,$e>>;
+%
+encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_I2C_READ ->
     <<$s,Msg:8,Param1:16,Param2:16,Param3:16,$e>>;
 %
 encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_I2C_OUT ->

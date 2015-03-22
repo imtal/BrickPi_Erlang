@@ -200,10 +200,14 @@ int BrickPiSetTimeout(){
     Array[(BYTE_TIMEOUT + 2)] = ((BrickPi.Timeout / 65536   ) & 0xFF);
     Array[(BYTE_TIMEOUT + 3)] = ((BrickPi.Timeout / 16777216) & 0xFF);
     BrickPiTx(BrickPi.Address[i], 5, Array);
-    if(BrickPiRx(&BytesReceived, Array, 2500))
+    if(BrickPiRx(&BytesReceived, Array, 2500)) {
+      fprintf(stderr,"BrickPiSetTimeout(): timeout reading response\r\n");
       return -1;
-    if(!(BytesReceived == 1 && Array[BYTE_MSG_TYPE] == MSG_TYPE_TIMEOUT_SETTINGS))
+    }
+    if(!(BytesReceived == 1 && Array[BYTE_MSG_TYPE] == MSG_TYPE_TIMEOUT_SETTINGS)) {
+      fprintf(stderr,"BrickPiSetTimeout(): wrong response\r\n");
       return -1;
+    }
     i++;
   }
   return 0;
@@ -293,10 +297,14 @@ int BrickPiSetupSensors(){
     }
     unsigned char UART_TX_BYTES = (((Bit_Offset + 7) / 8) + 3);
     BrickPiTx(BrickPi.Address[i], UART_TX_BYTES, Array);
-    if(BrickPiRx(&BytesReceived, Array, 5000000))
+    if(BrickPiRx(&BytesReceived, Array, 500000)) {
+      fprintf(stderr,"BrickPiSetupSensors(): timeout receivig data\n");
       return -1;
-    if(!(BytesReceived == 1 && Array[BYTE_MSG_TYPE] == MSG_TYPE_SENSOR_TYPE))
+    }
+    if(!(BytesReceived == 1 && Array[BYTE_MSG_TYPE] == MSG_TYPE_SENSOR_TYPE)) {
+      fprintf(stderr,"BrickPiSetupSensors(): wrong response\n");
       return -1;
+    }
     i++;
   }
   return 0;
@@ -514,8 +522,6 @@ __RETRY_COMMUNICATION__:
 int UART_file_descriptor = 0;
 
 int BrickPiSetup(){
-  //Changed serial routines
-  //UART_file_descriptor = serialOpen("/dev/ttyAMA0", 500000);
   UART_file_descriptor = serial_open("/dev/ttyAMA0", 500000);
   if(UART_file_descriptor == -1){
     return -1;
@@ -524,29 +530,83 @@ int BrickPiSetup(){
 }
 
 void BrickPiTx(unsigned char dest, unsigned char ByteCount, unsigned char OutArray[]){
-  unsigned char tx_buffer[256];
-  tx_buffer[0] = dest;
-  tx_buffer[1] = dest + ByteCount;
-  tx_buffer[2] = ByteCount;
-  unsigned char i = 0;
-  while(i < ByteCount){
-    tx_buffer[1] += OutArray[i];
-    tx_buffer[i + 3] = OutArray[i];
-    i++;
-  }
-
-  //i = 0;
-  //while(i < (ByteCount + 3)){
-  //  serialPutchar(UART_file_descriptor, tx_buffer[i]);
-  //  i++;
-  //}
-
+    unsigned char tx_buffer[256];
+    tx_buffer[0] = dest;
+    tx_buffer[1] = dest + ByteCount;
+    tx_buffer[2] = ByteCount;
+    unsigned char i = 0;
+    while(i < ByteCount){
+        tx_buffer[1] += OutArray[i];
+        tx_buffer[i + 3] = OutArray[i];
+        i++;
+    }
     int n;
     n = write(UART_file_descriptor,tx_buffer,ByteCount+3);
-    //fprintf(stderr,"Written %i\r\n",n);
+    //fprintf(stderr,"BrickPiTx(): written %i\r\n",n);
 }
 
 int BrickPiRx(unsigned char *InBytes, unsigned char *InArray, long timeout){  // timeout in uS, not mS
+  unsigned char rx_buffer[256];
+  unsigned char RxBytes = 0;
+  unsigned char CheckSum = 0;
+  unsigned char i = 0;
+  int result;
+  unsigned long OrigionalTick = CurrentTickUs();
+  while(serial_scan(UART_file_descriptor) <= 0){
+	// NOTE: All timeouts times 10, this is a workaround
+    if(timeout && ((CurrentTickUs() - OrigionalTick) >= timeout*10)) {
+      //fprintf(stderr,"BrickPiRx(): timeout reading response (%u)\r\n",timeout);
+      return -2;
+	}
+  }
+
+  RxBytes = 0;
+  while(RxBytes < serial_scan(UART_file_descriptor)){                                   // If it's been 1 ms since the last data was received, assume it's the end of the message.
+    RxBytes = serial_scan(UART_file_descriptor);
+    usleep(75);
+  }
+  
+  i = 0;  
+  while(i < RxBytes){
+    result = serial_getchar(UART_file_descriptor);
+    if(result >= 0){
+      //fprintf(stderr,"BrickPiRx(): reading %#04x\r\n",result);
+      rx_buffer[i] = result;
+    }
+    else{      
+      //fprintf(stderr,"BrickPiRx(): error reading response\r\n");
+      return -1;    
+    }
+    i++;    
+  }
+
+  if(RxBytes < 2) {
+    //fprintf(stderr,"BrickPiRx(): not enough bytes\r\n");
+    return -4;
+  }
+  if(RxBytes < (rx_buffer[1] + 2)) {
+    //fprintf(stderr,"BrickPiRx(): mismatch in received bytes\r\n");
+    return -6;
+  }
+  CheckSum = rx_buffer[1];
+
+  i = 0;
+  while(i < (RxBytes - 2)){
+    CheckSum += rx_buffer[i + 2];
+    InArray[i] = rx_buffer[i + 2];
+    i++;
+  }
+
+  if(CheckSum != rx_buffer[0]) {
+    //fprintf(stderr,"BrickPiRx(): checksum error\r\n");
+    return -5;
+  }
+  *InBytes = (RxBytes - 2);
+
+  return 0;
+}
+
+int BrickPiRx2(unsigned char *InBytes, unsigned char *InArray, long timeout){  // timeout in uS, not mS
     unsigned char c;
   unsigned char rx_buffer[256];
   unsigned char RxBytes = 0;
@@ -559,12 +619,13 @@ int BrickPiRx(unsigned char *InBytes, unsigned char *InArray, long timeout){  //
     i = 0;
     while (read(UART_file_descriptor, &c, 1)<0) {
         if((CurrentTickUs() - OrigionalTick) >= timeout) {
-            fprintf(stderr,"Timeout waiting for response\r\n");
+            fprintf(stderr,"BrickPiRx(): timeout waiting for response\r\n");
             return -2;
         }
         //fprintf(stderr,".");
         usleep(75);
     }
+    fprintf(stderr,"BrickPiRx(): reading %#04x\r\n",c);
     rx_buffer[RxBytes] = c;
     RxBytes++;
 
@@ -580,7 +641,7 @@ int BrickPiRx(unsigned char *InBytes, unsigned char *InArray, long timeout){  //
     // read response
     while ((CurrentTickUs() - OrigionalTick) < timeout) {
         if (read(UART_file_descriptor, &c, 1)>=0) {
-            //fprintf(stderr,"+");
+            fprintf(stderr,"BrickPiRx(): reading %#04x\r\n",c);
             rx_buffer[RxBytes] = c;
             i=0;
             RxBytes++;
@@ -589,20 +650,22 @@ int BrickPiRx(unsigned char *InBytes, unsigned char *InArray, long timeout){  //
                 //printf(stderr,",");
                 usleep(75);
             } else {
-                //fprintf(stderr,"- Timeout reading response\r\n");
+                fprintf(stderr,"BrickPiRx(): timeout reading response\r\n");
                 break;
             }
             i++;
         }
     }
-    //fprintf(stderr,"Read %i\r\n",RxBytes);
+    fprintf(stderr,"BrickPiRx(): read %i bytes\r\n",RxBytes);
 
-  if(RxBytes < 2)
+  if(RxBytes < 2) {
+    fprintf(stderr,"BrickPiRx(): not enough bytes\r\n");
     return -4;
-
-  if(RxBytes < (rx_buffer[1] + 2))
+  }
+  if(RxBytes < (rx_buffer[1] + 2)) {
+    fprintf(stderr,"BrickPiRx(): mismatch in received bytes\r\n");
     return -6;
-
+  }
   CheckSum = rx_buffer[1];
 
   i = 0;
@@ -612,9 +675,10 @@ int BrickPiRx(unsigned char *InBytes, unsigned char *InArray, long timeout){  //
     i++;
   }
 
-  if(CheckSum != rx_buffer[0])
+  if(CheckSum != rx_buffer[0]) {
+    fprintf(stderr,"BrickPiRx(): checksum error\r\n");
     return -5;
-
+  }
   *InBytes = (RxBytes - 2);
 
   return 0;

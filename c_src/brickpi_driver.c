@@ -27,48 +27,48 @@
 
 unsigned char buffer[MAX_OUTPUT];
 
-unload() {
-    LOG("- Unloaded brickpi_driver (%s)\n\r",strerror(errno));
+unload(int i) {
+    LOG("- Unloaded brickpi_driver (%s at %i)\n\r",strerror(errno),i);
     exit(0);
 }
 
 int read_start() {
-    if (read(STDIN_FILENO,buffer,1)<=0) unload();
+    if (read(STDIN_FILENO,buffer,1)<=0) unload(1);
     return (buffer[0]==MSG_START);
 }
 
 int read_end() {
-    if (read(STDIN_FILENO,buffer,1)<=0) unload();
+    if (read(STDIN_FILENO,buffer,1)<=0) unload(2);
     return (buffer[0]==MSG_END);
 }
 
 char read_command() {
-    if (read(STDIN_FILENO,buffer,1)<=0) unload();
+    if (read(STDIN_FILENO,buffer,1)<=0) unload(3);
     return buffer[0];
 }
 
 short read_byte() {
     uint8_t value;
-    if (read(STDIN_FILENO,buffer,sizeof(uint8_t))<=0) unload();
+    if (read(STDIN_FILENO,buffer,sizeof(uint8_t))<=0) unload(4);
     memcpy(&value,buffer,sizeof(uint8_t));
     return ntohs(value);
 }
 short read_short() {
     uint16_t value;
-    if (read(STDIN_FILENO,buffer,sizeof(uint16_t))<=0) unload();
+    if (read(STDIN_FILENO,buffer,sizeof(uint16_t))<=0) unload(5);
     memcpy(&value,buffer,sizeof(uint16_t));
     return ntohs(value);
 }
 
 long read_long() {
     uint32_t value;
-    if (read(STDIN_FILENO,buffer,sizeof(uint32_t))<=0) unload();
+    if (read(STDIN_FILENO,buffer,sizeof(uint32_t))<=0) unload(6);
     memcpy(&value,buffer,sizeof(uint32_t));
     return ntohl(value);
 }
 
 void read_bytes(unsigned char* buf, int len) {
-    if (read(STDIN_FILENO,buf,len)<=0) unload();
+    if (read(STDIN_FILENO,buf,len)<=0) unload(7);
 }
 
 send_ok() {
@@ -117,7 +117,6 @@ send_value_data_16(char* data) {
 }
 
 send_error(byte b) {
-    //LOG("ERROR %c\n",b);
     buffer[0] = MSG_START;
     buffer[1] = R_ERROR;
     buffer[2] = b;
@@ -133,7 +132,6 @@ receive_command() {
                 from = read_short();
                 to = read_short();
                 if (read_end()) {
-                    // Setup PORT_1 for touch sensor
                     LOG("- Change address %i to %i\r\n",from,to);
                     if (BrickPiChangeAddress(from,to)) {
                         send_error(E_ADDRESS);
@@ -237,7 +235,7 @@ receive_command() {
                 if (read_end()) {
                     if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
                     if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    LOG("- Set on sensor port %i, on I2C device %i the settings to %i\r\n",port,device,settings);
+                    LOG("- Set sensor port %i, I2C device %i to the settings %i\r\n",port,device,settings);
                     BrickPi.SensorSettings[port][device] = settings;
                     send_ok();
                 } else {
@@ -277,7 +275,7 @@ receive_command() {
                 devices = read_short();
                 if (read_end()) {
                     if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    LOG("- Set on sensor port %i the number of I2C devices to %i\r\n",port,devices);
+                    LOG("- Set sensor port %i to the number of I2C devices to %i\r\n",port,devices);
                     BrickPi.SensorI2CDevices[port] = devices;
                     send_ok();
                 } else {
@@ -291,7 +289,7 @@ receive_command() {
                 speed = read_short();
                 if (read_end()) {
                     if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    LOG("- Set on sensor port %i the I2C speed %i\r\n",port,speed);
+                    LOG("- Set sensor port %i to the I2C speed %i\r\n",port,speed);
                     BrickPi.SensorI2CSpeed[port] = speed;
                     send_ok();
                 } else {
@@ -306,9 +304,43 @@ receive_command() {
                 address = read_short();
                 if (read_end()) {
                     if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    if (device<0 || device>8) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    LOG("- Set on sensor port %i, on I2C device %i the address to %i\r\n",port,device,address);
+                    if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    LOG("- Set sensor port %i, I2C device %i to the address to %i\r\n",port,device,address);
                     BrickPi.SensorI2CAddr[port][device] = address;
+                    send_ok();
+                } else {
+                    send_error(E_PROTOCOL_ERROR);
+                }
+                break;
+            }
+            case M_SET_SENSOR_I2C_WRITE: {
+                short port,device,count;
+                port = read_short();
+                device = read_short();
+                count = read_short();
+                if (read_end()) {
+                    if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    if (count<0 || count>15) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    LOG("- Set sensor port %i, I2C device %i to the amount of bytes to write to %i\r\n",port,device,count);
+					BrickPi.SensorI2CWrite[port][device]=count;
+                    send_ok();
+                } else {
+                    send_error(E_PARAMETER_COUNT);
+                }
+                break;
+            }
+            case M_SET_SENSOR_I2C_READ: {
+                short port,device,count;
+                port = read_short();
+                device = read_short();
+                count = read_short();
+                if (read_end()) {
+                    if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    if (count<0 || count>15) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    LOG("- Set sensor port %i, I2C device %i to the amount of bytes to read to %i\r\n",port,device,count);
+					BrickPi.SensorI2CRead[port][device]=count;
                     send_ok();
                 } else {
                     send_error(E_PROTOCOL_ERROR);
@@ -323,8 +355,8 @@ receive_command() {
                 read_bytes(output,16);
                 if (read_end()) {
                     if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    if (device<0 || device>8) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    LOG("- Set on sensor port %i, on I2C device %i the output to \"%s\"\r\n",port,device,output);
+                    if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    LOG("- Set sensor port %i, I2C device %i to write to output \"%s\"\r\n",port,device,output);
                     memcpy(BrickPi.SensorI2COut[port][device],output,16);
                     send_ok();
                 } else {
@@ -338,8 +370,8 @@ receive_command() {
                 device = read_short();
                 if (read_end()) {
                     if (port<0 || port>3) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    if (device<0 || device>8) { send_error(E_PARAMETER_OVERFLOW); break; }
-                    LOG("- Get from sensor port %i, I2C device %i the output\r\n",port,device);
+                    if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
+                    LOG("- Get sensor port %i, I2C device %i the input\r\n",port,device);
                     send_value_data_16(BrickPi.SensorI2COut[port][device]);
                 } else {
                     send_error(E_PROTOCOL_ERROR);
@@ -396,6 +428,7 @@ receive_command() {
             }
         }
     } else {
+        LOG("- Received unexpected character\r\n");
         send_error(E_PROTOCOL_ERROR);
     }
 }
