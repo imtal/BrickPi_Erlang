@@ -67,6 +67,7 @@ priv/bin/brickpi_driver: $(O_FILES) priv/bin
 #$(CC) -o $@ $(LDFLAGS) $(O_FILES) $(LDLIBS) -lrt -lm -L/usr/local/lib -lwiringPi
 
 edoc:
+	mkdir -p doc
 	erl \
 		-noshell \
 		-pa ebin \
