@@ -85,18 +85,21 @@ The second example used the module's builtin monitoring function for sensor valu
 	-include("include/brickpi.hrl").
 
 	start() ->
+		Handler = spawn_link(?MODULE,init,[]), 
+		brickpi:sleep(10000), % run excercise for 10 seconds
+		Handler ! stop,
+		brickpi:sleep(1000). % wait for another second
+
+	init() ->
 		brickpi:start(), 
-		brickpi:set_timeout(3000), 
+		brickpi:set_timeout(3000), % motors run for 3 seconds max
 		brickpi:set_motor_enable(?PORT_A,1), 
 		brickpi:update(), 
 		{ok,Offset} = brickpi:get_motor_encoder(?PORT_A), 
-		Handler = spawn_link(?MODULE,loop,[Offset]), 
 		brickpi:set_motor_speed(?PORT_A,200), 
-		brickpi:set_motor_monitor(?PORT_A,Handler), 
-		brickpi:update(1000), % update every second
-		brickpi:sleep(10000), % do this excercise for ten seconds
-		brickpi:halt(), 
-		brickpi:stop(). 
+		brickpi:set_motor_monitor(?PORT_A), 
+		brickpi:update(100), % update every 100ms
+		loop(Offset).
 
 	loop(Offset) ->
 		receive
@@ -108,10 +111,13 @@ The second example used the module's builtin monitoring function for sensor valu
 				% forward
 				brickpi:set_motor_speed(?PORT_A,200),
 				loop(Offset);
+			stop ->
+				brickpi:halt(), 
+				brickpi:stop();			
 			_Other ->
 				loop(Offset)
 		end.
-
+    
 Internals
 --------
 The port driver is implemented using the BrickPi_C library. The port driver is based on simple messages passing like for setting a motor speed, setting a sensor mode, etc. The overall message format for messages and responses between the Raspberry and the BrickPi is like this:
