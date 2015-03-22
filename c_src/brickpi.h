@@ -553,11 +553,11 @@ int BrickPiRx(unsigned char *InBytes, unsigned char *InArray, long timeout){  //
   int result;
   unsigned long OrigionalTick = CurrentTickUs();
   while(serial_scan(UART_file_descriptor) <= 0){
-	// NOTE: All timeouts times 10, this is a workaround
+    // NOTE: All timeouts times 10, this is a workaround
     if(timeout && ((CurrentTickUs() - OrigionalTick) >= timeout*10)) {
       //fprintf(stderr,"BrickPiRx(): timeout reading response (%u)\r\n",timeout);
       return -2;
-	}
+    }
   }
 
   RxBytes = 0;
@@ -565,19 +565,19 @@ int BrickPiRx(unsigned char *InBytes, unsigned char *InArray, long timeout){  //
     RxBytes = serial_scan(UART_file_descriptor);
     usleep(75);
   }
-  
-  i = 0;  
+
+  i = 0;
   while(i < RxBytes){
     result = serial_getchar(UART_file_descriptor);
     if(result >= 0){
       //fprintf(stderr,"BrickPiRx(): reading %#04x\r\n",result);
       rx_buffer[i] = result;
     }
-    else{      
+    else{
       //fprintf(stderr,"BrickPiRx(): error reading response\r\n");
-      return -1;    
+      return -1;
     }
-    i++;    
+    i++;
   }
 
   if(RxBytes < 2) {

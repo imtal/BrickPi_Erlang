@@ -101,7 +101,7 @@ set_sensor_type(Port,Value) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets the sensor settings for the specfied I2C device on the specified port. 
+%% Sets the sensor settings for the specfied I2C device on the specified port.
 %% The settings should be given as an unsigned of which only 8 bits are used.
 %% @end
 %%--------------------------------------------------------------------
@@ -120,9 +120,9 @@ get_sensor_value(Port) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets automatic monitoring of a sensor value 
-%% and sends messages when this value changes. Without passing a handler  
-%% pid the messages are sent tio the calling process. 
+%% Sets automatic monitoring of a sensor value
+%% and sends messages when this value changes. Without passing a handler
+%% pid the messages are sent tio the calling process.
 %% @end
 %%--------------------------------------------------------------------
 -spec brickpi:set_sensor_monitor(Port::unsigned()) -> ok | {error,Reason::atom()}.
@@ -171,7 +171,7 @@ set_sensor_i2c_address(Port,Device,Address) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets the amount of bytes that are sent to 
+%% Sets the amount of bytes that are sent to
 %% the specified I2C device on the specified sensor port.
 %% @end
 %%--------------------------------------------------------------------
@@ -245,9 +245,9 @@ get_motor_encoder(Port) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets automatic monitoring of a motor encoder value 
-%% and sends messages when this value changes. Without passing a handler  
-%% pid the messages are sent tio the calling process. 
+%% Sets automatic monitoring of a motor encoder value
+%% and sends messages when this value changes. Without passing a handler
+%% pid the messages are sent tio the calling process.
 %% @end
 %%--------------------------------------------------------------------
 -spec brickpi:set_motor_monitor(Port::unsigned()) -> ok | {error,Reason::atom()}.
@@ -288,12 +288,12 @@ update() ->
 -spec brickpi:update(Interval::unsigned()) -> ok | {error,Reason::atom()}.
 update(Interval) ->
     case Interval of
-		0 -> 
-			call({interval,infinity});
-		I when I<10 ->
-			{error,interval_too_small};
-		I -> 
-			call({interval,I})
+        0 ->
+            call({interval,infinity});
+        I when I<10 ->
+            {error,interval_too_small};
+        I ->
+            call({interval,I})
     end.
 
 %%--------------------------------------------------------------------
@@ -377,7 +377,7 @@ call_driver(Port,Msg,Timeout) ->
         Timeout -> {error,timeout}
     end.
 
-    
+
 % -------------------
 encode({Msg}) ->
     <<$s,Msg:8,$e>>;
@@ -427,7 +427,7 @@ encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_I2C_READ ->
 encode({Msg,Param1,Param2,Param3})  when Msg == ?M_SET_SENSOR_I2C_OUT ->
     % extend/restrict Param3 to 16 bytes
     L = bit_size(Param3),
-    P = if  
+    P = if
             L<128 -> <<Param3/bitstring,0:(128-L)>>;
             true  -> binary:part(Param3,0,16)
         end,

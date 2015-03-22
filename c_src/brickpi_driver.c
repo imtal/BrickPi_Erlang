@@ -323,7 +323,7 @@ receive_command() {
                     if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
                     if (count<0 || count>15) { send_error(E_PARAMETER_OVERFLOW); break; }
                     LOG("- Set sensor port %i, I2C device %i to the amount of bytes to write to %i\r\n",port,device,count);
-					BrickPi.SensorI2CWrite[port][device]=count;
+                    BrickPi.SensorI2CWrite[port][device]=count;
                     send_ok();
                 } else {
                     send_error(E_PARAMETER_COUNT);
@@ -340,7 +340,7 @@ receive_command() {
                     if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
                     if (count<0 || count>15) { send_error(E_PARAMETER_OVERFLOW); break; }
                     LOG("- Set sensor port %i, I2C device %i to the amount of bytes to read to %i\r\n",port,device,count);
-					BrickPi.SensorI2CRead[port][device]=count;
+                    BrickPi.SensorI2CRead[port][device]=count;
                     send_ok();
                 } else {
                     send_error(E_PROTOCOL_ERROR);
