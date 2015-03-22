@@ -1,0 +1,242 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Module brickpi</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module brickpi</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>   
+BrickPi port driver.
+<p>Copyright © (C) 2014, Tjeerd van der Laan
+  </p>
+
+<p><b>Authors:</b> Tjeerd van der Laan (<a href="mailto:imtal@yolt.nl"><tt>imtal@yolt.nl</tt></a>).</p>
+
+<h2><a name="description">Description</a></h2><p>   
+BrickPi port driver</p>
+  
+   <p>Created: December 27, 2013   
+Updated: July 12, 2014</p>
+  
+   <p>You may use this code as you wish, provided you give credit where it's due.</p>
+  
+   <p>This program is specifically to be used with the BrickPi.</p>
+  
+   This is an Erlang port driver for the BrickPi.
+  
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#change_address-2">change_address/2</a></td><td>
+  Change the address of one of the Arduinos on the BrickPi.</td></tr>
+<tr><td valign="top"><a href="#get_motor_encoder-1">get_motor_encoder/1</a></td><td>
+  Retrieve the motor encoder value for the specified port.</td></tr>
+<tr><td valign="top"><a href="#get_sensor_ext-2">get_sensor_ext/2</a></td><td>
+  Get one of the sensor array values of the specified port.</td></tr>
+<tr><td valign="top"><a href="#get_sensor_i2c_in-2">get_sensor_i2c_in/2</a></td><td>
+  Reads the data from the specified I2C device on the specified sensor port.</td></tr>
+<tr><td valign="top"><a href="#get_sensor_value-1">get_sensor_value/1</a></td><td>
+  Get the sensor value of the specified port.</td></tr>
+<tr><td valign="top"><a href="#halt-0">halt/0</a></td><td>
+  Stops all activity of the motors.</td></tr>
+<tr><td valign="top"><a href="#set_motor_enable-2">set_motor_enable/2</a></td><td>
+  Enable the motor on the specified port.</td></tr>
+<tr><td valign="top"><a href="#set_motor_offset-2">set_motor_offset/2</a></td><td>
+  Set the motor encoder offset on the specified port.</td></tr>
+<tr><td valign="top"><a href="#set_motor_speed-2">set_motor_speed/2</a></td><td>
+  Set the motor speed on the specified port.</td></tr>
+<tr><td valign="top"><a href="#set_sensor_i2c_address-3">set_sensor_i2c_address/3</a></td><td>
+  Sets the address of the specified I2C device on the specified sensor port.</td></tr>
+<tr><td valign="top"><a href="#set_sensor_i2c_devices-2">set_sensor_i2c_devices/2</a></td><td>
+  Sets the number of I2C devices on the specified sensor port.</td></tr>
+<tr><td valign="top"><a href="#set_sensor_i2c_out-3">set_sensor_i2c_out/3</a></td><td>
+  Sends the data to the specified I2C device on the specified sensor port.</td></tr>
+<tr><td valign="top"><a href="#set_sensor_i2c_read-3">set_sensor_i2c_read/3</a></td><td>
+  Sets the amount of bytesthat are read from
+  the specified I2C device on the specified sensor port.</td></tr>
+<tr><td valign="top"><a href="#set_sensor_i2c_settings-3">set_sensor_i2c_settings/3</a></td><td>
+  Sets the sensor settings for the specfied I2C device on the specified port.</td></tr>
+<tr><td valign="top"><a href="#set_sensor_i2c_speed-2">set_sensor_i2c_speed/2</a></td><td>
+  Sets the I2C speed on the specified sensor port.</td></tr>
+<tr><td valign="top"><a href="#set_sensor_i2c_write-3">set_sensor_i2c_write/3</a></td><td>
+  Sets the amount of bytes that are sent to
+  the specified I2C device on the specified sensor port.</td></tr>
+<tr><td valign="top"><a href="#set_sensor_type-2">set_sensor_type/2</a></td><td>
+  Sets the sensor type on one of the ports.</td></tr>
+<tr><td valign="top"><a href="#set_timeout-1">set_timeout/1</a></td><td>
+  Sets the timeout on the BrickPi.</td></tr>
+<tr><td valign="top"><a href="#setup-0">setup/0</a></td><td>
+  Initialize the sensors with the given values.</td></tr>
+<tr><td valign="top"><a href="#sleep-1">sleep/1</a></td><td>
+  Sleep for the given time in milliseconds.</td></tr>
+<tr><td valign="top"><a href="#start-0">start/0</a></td><td>
+  Starts the BrickPi port driver.</td></tr>
+<tr><td valign="top"><a href="#stop-0">stop/0</a></td><td>
+  Stops the BrickPi port driver.</td></tr>
+<tr><td valign="top"><a href="#update-0">update/0</a></td><td>
+  Update the values of the BrickPi.</td></tr>
+<tr><td valign="top"><a href="#update-1">update/1</a></td><td>
+  Starts or stops the automatic update the values of the BrickPi.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="change_address-2">change_address/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:change_address(From::<a href="#type-unsigned">unsigned()</a>, To::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Change the address of one of the Arduinos on the BrickPi</p>
+
+<h3 class="function"><a name="get_motor_encoder-1">get_motor_encoder/1</a></h3>
+<div class="spec">
+<p><tt>brickpi:get_motor_encoder(Port::<a href="#type-unsigned">unsigned()</a>) -&gt; {ok, Value::<a href="#type-unsigned">unsigned()</a>} | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Retrieve the motor encoder value for the specified port</p>
+
+<h3 class="function"><a name="get_sensor_ext-2">get_sensor_ext/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:get_sensor_ext(Port::<a href="#type-unsigned">unsigned()</a>, Index::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Get one of the sensor array values of the specified port.</p>
+
+<h3 class="function"><a name="get_sensor_i2c_in-2">get_sensor_i2c_in/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:get_sensor_i2c_in(Port::<a href="#type-unsigned">unsigned()</a>, Device::<a href="#type-unsigned">unsigned()</a>) -&gt; {ok, Value::binary()} | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Reads the data from the specified I2C device on the specified sensor port.</p>
+
+<h3 class="function"><a name="get_sensor_value-1">get_sensor_value/1</a></h3>
+<div class="spec">
+<p><tt>brickpi:get_sensor_value(Port::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Get the sensor value of the specified port.</p>
+
+<h3 class="function"><a name="halt-0">halt/0</a></h3>
+<div class="spec">
+<p><tt>brickpi:halt() -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Stops all activity of the motors</p>
+
+<h3 class="function"><a name="set_motor_enable-2">set_motor_enable/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_motor_enable(Port::<a href="#type-unsigned">unsigned()</a>, Value::boolean()) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Enable the motor on the specified port.</p>
+
+<h3 class="function"><a name="set_motor_offset-2">set_motor_offset/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_motor_offset(Port::<a href="#type-unsigned">unsigned()</a>, Value::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Set the motor encoder offset on the specified port.</p>
+
+<h3 class="function"><a name="set_motor_speed-2">set_motor_speed/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_motor_speed(Port::<a href="#type-unsigned">unsigned()</a>, Value::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Set the motor speed on the specified port.</p>
+
+<h3 class="function"><a name="set_sensor_i2c_address-3">set_sensor_i2c_address/3</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_sensor_i2c_address(Port::<a href="#type-unsigned">unsigned()</a>, Device::<a href="#type-unsigned">unsigned()</a>, Address::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sets the address of the specified I2C device on the specified sensor port.</p>
+
+<h3 class="function"><a name="set_sensor_i2c_devices-2">set_sensor_i2c_devices/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_sensor_i2c_devices(Port::<a href="#type-unsigned">unsigned()</a>, Number::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sets the number of I2C devices on the specified sensor port.</p>
+
+<h3 class="function"><a name="set_sensor_i2c_out-3">set_sensor_i2c_out/3</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_sensor_i2c_out(Port::<a href="#type-unsigned">unsigned()</a>, Device::<a href="#type-unsigned">unsigned()</a>, Output::binary()) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sends the data to the specified I2C device on the specified sensor port.</p>
+
+<h3 class="function"><a name="set_sensor_i2c_read-3">set_sensor_i2c_read/3</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_sensor_i2c_read(Port::<a href="#type-unsigned">unsigned()</a>, Device::<a href="#type-unsigned">unsigned()</a>, Count::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sets the amount of bytesthat are read from
+  the specified I2C device on the specified sensor port.</p>
+
+<h3 class="function"><a name="set_sensor_i2c_settings-3">set_sensor_i2c_settings/3</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_sensor_i2c_settings(Port::<a href="#type-unsigned">unsigned()</a>, Device::<a href="#type-unsigned">unsigned()</a>, Value::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sets the sensor settings for the specfied I2C device on the specified port.
+  The settings should be given as an unsigned of which only 8 bits are used.</p>
+
+<h3 class="function"><a name="set_sensor_i2c_speed-2">set_sensor_i2c_speed/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_sensor_i2c_speed(Port::<a href="#type-unsigned">unsigned()</a>, Speed::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sets the I2C speed on the specified sensor port.</p>
+
+<h3 class="function"><a name="set_sensor_i2c_write-3">set_sensor_i2c_write/3</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_sensor_i2c_write(Port::<a href="#type-unsigned">unsigned()</a>, Device::<a href="#type-unsigned">unsigned()</a>, Count::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sets the amount of bytes that are sent to
+  the specified I2C device on the specified sensor port.</p>
+
+<h3 class="function"><a name="set_sensor_type-2">set_sensor_type/2</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_sensor_type(Port::<a href="#type-unsigned">unsigned()</a>, Value::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sets the sensor type on one of the ports</p>
+
+<h3 class="function"><a name="set_timeout-1">set_timeout/1</a></h3>
+<div class="spec">
+<p><tt>brickpi:set_timeout(Value::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Sets the timeout on the BrickPi</p>
+
+<h3 class="function"><a name="setup-0">setup/0</a></h3>
+<div class="spec">
+<p><tt>brickpi:setup() -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Initialize the sensors with the given values.</p>
+
+<h3 class="function"><a name="sleep-1">sleep/1</a></h3>
+<div class="spec">
+<p><tt>brickpi:sleep(Time::<a href="#type-unsigned">unsigned()</a>) -&gt; ok</tt><br></p>
+</div><p>
+  Sleep for the given time in milliseconds</p>
+
+<h3 class="function"><a name="start-0">start/0</a></h3>
+<div class="spec">
+<p><tt>brickpi:start() -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Starts the BrickPi port driver</p>
+
+<h3 class="function"><a name="stop-0">stop/0</a></h3>
+<div class="spec">
+<p><tt>brickpi:stop() -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Stops the BrickPi port driver</p>
+
+<h3 class="function"><a name="update-0">update/0</a></h3>
+<div class="spec">
+<p><tt>brickpi:update() -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Update the values of the BrickPi. This sends all settings to the
+  hardware and gets new values from the sensors.</p>
+
+<h3 class="function"><a name="update-1">update/1</a></h3>
+<div class="spec">
+<p><tt>brickpi:update(Interval::<a href="#type-unsigned">unsigned()</a>) -&gt; ok | {error, Reason::atom()}</tt><br></p>
+</div><p>
+  Starts or stops the automatic update the values of the BrickPi.
+  An interval of 0 stops the automatic update, a value higher than
+  zero starts automatic updates using this interval in milliseconds.
+  An interval smaller than 10ms generates an error</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Mar 22 2015, 18:52:38.</i></p>
+</body>
+</html>
