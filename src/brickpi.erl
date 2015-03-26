@@ -449,9 +449,9 @@ decode(<<?MSG_START:8,?R_SHORT:8,Value:16,?MSG_END:8>>) ->
     {ok,Value};
 decode(<<?MSG_START:8,?R_LONG:8,Value:32,?MSG_END:8>>) ->
     {ok,Value};
-decode(<<?MSG_START:8,?R_DATA_8:8,Value:64,?MSG_END:8>>) ->
+decode(<<?MSG_START:8,?R_DATA_8:8,Value:8/binary,?MSG_END:8>>) ->
     {ok,Value};
-decode(<<?MSG_START:8,?R_DATA_16:8,Value:128,?MSG_END:8>>) ->
+decode(<<?MSG_START:8,?R_DATA_16:8,Value:16/binary,?MSG_END:8>>) ->
     {ok,Value};
 decode(<<?MSG_START:8,?R_ERROR:8,Code:8,?MSG_END:8>>) ->
     case Code of
