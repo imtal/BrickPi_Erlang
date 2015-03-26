@@ -29,8 +29,8 @@ The BrickPi driver for Erlang defined the following functions, which alter parts
     set_sensor_i2c_devices(Port)
     set_sensor_i2c_speed(Port)
     set_sensor_i2c_adress(Port,Device,Address)
-    set_sensor_i2c_output(Port,Device,Data)
-    get_sensor_i2c_input(Port,Device)
+    set_sensor_i2c_out(Port,Device,Data)
+    get_sensor_i2c_in(Port,Device)
 
     setup_sensors()
     update()
