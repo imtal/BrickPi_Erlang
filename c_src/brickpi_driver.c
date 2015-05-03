@@ -20,12 +20,16 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <linux/i2c-dev.h>
 
 #include "tick.h"
 #include "brickpi.h"
 #include "brickpi_driver.h"
 
+
 unsigned char buffer[MAX_OUTPUT];
+int i2c_fd;
+
 
 unload() {
     LOG("- Unloaded brickpi_driver\n\r");
@@ -373,6 +377,123 @@ receive_command() {
                     if (device<0 || device>7) { send_error(E_PARAMETER_OVERFLOW); break; }
                     LOG("- Get sensor input from port %i, I2C device %i\r\n",port,device);
                     send_value_data_16(BrickPi.SensorI2CIn[port][device]);
+                } else {
+                    send_error(E_PROTOCOL_ERROR);
+                }
+                break;
+            }
+            case M_I2C_SETUP: {
+                if (read_end()) {
+	                LOG("- Setup I2C port 5\r\n",port);
+	                i2c_fd = open("/dev/i2c-1",O_RDWR);
+	                if (i2c_fd<0) {
+	                    send_error(E_I2C_SETUP);
+	                } else {
+                            send_ok();
+                        }
+                } else {
+                    send_error(E_PROTOCOL_ERROR);
+                }
+                break;
+            }
+            case M_I2C_READ: {
+                short address,data;
+                address = read_short();
+                if (read_end()) {
+                    LOG("- Read from I2C device on port 5 with adress %02x\r\n",address);
+                    if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        send_error(E_I2C_COMMUNICATION);
+                    } else {
+                        data = i2c_smbus_read_byte(i2c_fd);
+                        send_value_short(data);
+                    }
+                } else {
+                    send_error(E_PROTOCOL_ERROR);
+                }
+                break;
+            }
+            case M_I2C_WRITE: {
+                short address,data;
+                address = read_short();
+                data = read_short();
+                if (read_end()) {
+                    LOG("- Write to I2C device on port 5 with address %02x\r\n",address);
+                    if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        send_error(E_I2C_COMMUNICATION);
+                    } else {
+                        i2c_smbus_write_byte(i2c_fd,data);
+                        send_ok();
+                    }
+                } else {
+                    send_error(E_PROTOCOL_ERROR);
+                }
+                break;
+            }
+            case M_I2C_READ_REG_8: {
+                short address,reg,data;
+                address = read_short();
+                reg = read_short();
+                if (read_end()) {
+                    LOG("- Read byte from I2C device register %02x on port 5 with adress %02x\r\n",reg,address);
+                    if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        send_error(E_I2C_COMMUNICATION);
+                    } else {
+                        data = i2c_smbus_read_byte_data(i2c_fd,reg);
+                        send_value_short(data);
+                    }
+                } else {
+                    send_error(E_PROTOCOL_ERROR);
+                }
+                break;
+            }
+            case M_I2C_WRITE_REG_8: {
+                short address,reg,data;
+                address = read_short();
+                reg = read_short();
+                data = read_short();
+                if (read_end()) {
+                    LOG("- Write byte to I2C device register %02x on port 5 with address %02x\r\n",reg,address);
+                    if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        send_error(E_I2C_COMMUNICATION);
+                    } else {
+                        i2c_smbus_write_byte_data(i2c_fd,reg,data);
+                        send_ok();
+                    }
+                } else {
+                    send_error(E_PROTOCOL_ERROR);
+                }
+                break;
+            }
+            case M_I2C_READ_REG_16: {
+                short address,reg,data;
+                address = read_short();
+                reg = read_short();
+                if (read_end()) {
+                    LOG("- Read byte from I2C device register %02x on port 5 with adress %02x\r\n",reg,address);
+                    if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        send_error(E_I2C_COMMUNICATION);
+                    } else {
+                        data = i2c_smbus_read_word_data(i2c_fd,reg);
+                        send_value_short(data);
+                    }
+                } else {
+                    send_error(E_PROTOCOL_ERROR);
+                }
+                break;
+            }
+            case M_I2C_WRITE_REG_16: {
+                short address,reg,data;
+                address = read_short();
+                reg = read_short();
+                data = read_short();
+                if (read_end()) {
+                    LOG("- Write byte to I2C device register %02x on port 5 with address %02x\r\n",reg,address);
+                    if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        send_error(E_I2C_COMMUNICATION);
+                    } else {
+                        i2c_smbus_write_word_data(i2c_fd,reg,data);
+                        send_ok();
+                    }
                 } else {
                     send_error(E_PROTOCOL_ERROR);
                 }

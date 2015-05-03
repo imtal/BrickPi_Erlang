@@ -50,6 +50,14 @@
 -define(M_SET_MOTOR_SPEED,             $G).
 -define(M_SET_MOTOR_OFFSET,            $L).
 -define(M_GET_MOTOR_ENCODER,           $E).
+% port 5
+-define(M_I2C_SETUP,                   $s).
+-define(M_I2C_READ,                    $g).
+-define(M_I2C_WRITE,                   $h).
+-define(M_I2C_READ_REG_8,              $k).
+-define(M_I2C_WRITE_REG_8,             $l).
+-define(M_I2C_READ_REG_16,             $m).
+-define(M_I2C_WRITE_REG_16,            $n).
 % generic
 -define(M_SETUP,                       $Q).
 -define(M_UPDATE,                      $Z).
@@ -73,13 +81,16 @@
 -define(E_PROTOCOL_ERROR,              $P).
 -define(E_BUFFER_OVERFLOW,             $O).
 -define(E_PARAMETER_OVERFLOW,          $o).
+-define(E_I2C_SETUP,                   $s).
+-define(E_I2C_COMMUNICATION,           $c).
+
 
 % Sensor setup (MSG_TYPE_SENSOR_TYPE)
 -define(BYTE_SENSOR_1_TYPE,             1).
 -define(BYTE_SENSOR_2_TYPE,             2).
   
 % Timeout setup (MSG_TYPE_TIMEOUT_SETTINGS)
--define(BYTE_TIMEOUT, 1).
+-define(BYTE_TIMEOUT,                   1).
 
 -define(TYPE_MOTOR_PWM,                 0).
 -define(TYPE_MOTOR_SPEED,               1).

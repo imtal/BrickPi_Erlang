@@ -32,6 +32,14 @@ typedef unsigned char byte;
 #define M_SET_MOTOR_SPEED             'G'
 #define M_SET_MOTOR_OFFSET            'L'
 #define M_GET_MOTOR_ENCODER           'E'
+// port 5
+#define M_I2C_SETUP                   's'
+#define M_I2C_READ                    'g'
+#define M_I2C_WRITE                   'h'
+#define M_I2C_READ_REG_8              'k'
+#define M_I2C_WRITE_REG_8             'l'
+#define M_I2C_READ_REG_16             'm'
+#define M_I2C_WRITE_REG_16            'n'
 // generic
 #define M_SETUP                       'Q'
 #define M_UPDATE                      'Z'
@@ -56,6 +64,8 @@ typedef unsigned char byte;
 #define E_PARAMETER_COUNT             'p'
 #define E_BUFFER_OVERFLOW             'O'
 #define E_PARAMETER_OVERFLOW          'o'
+#define E_I2C_SETUP                   's'
+#define E_I2C_COMMUNICATION           'c'
 
 // parser states
 //#define S_IDLE    0

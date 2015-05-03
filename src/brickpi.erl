@@ -260,6 +260,75 @@ set_motor_monitor(Port,Handler) ->
 
 %%--------------------------------------------------------------------
 %% @doc
+%% Setup I2C communication on port 5
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:i2c_setup() -> ok | {error,Reason::atom()}.
+i2c_setup() ->
+    call({?M_I2C_SETUP}).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Read from I2C device on port 5
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:i2c_read(Address::unsigned()) -> ok | {error,Reason::atom()}.
+i2c_read(Address) ->
+    call({?M_I2C_READ,Address}).
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Write to I2C device on port 5
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:i2c_write(Address::unsigned(), Data::unsigned()) -> ok | {error,Reason::atom()}.
+i2c_write(Address,Data) ->
+    call({?M_I2C_WRITE,Address,Data}).
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Read byte from I2C device register on port 5
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:i2c_read_reg_8(Address::unsigned(), Reg::unsigned()) -> ok | {error,Reason::atom()}.
+i2c_read_reg_8(Address,Reg) ->
+    call({?M_I2C_READ_REG_8,Address,Reg}).
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Write byte to I2C device register on port 5
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:i2c_write_reg_8(Address::unsigned(), Reg::unsigned(), Data::unsigned()) -> ok | {error,Reason::atom()}.
+i2c_write_reg_8(Address,Reg,Data) ->
+    call({?M_I2C_WRITE_REG_8,Address,Reg,Data}).
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Read word from I2C device register on port 5
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:i2c_read_reg_16(Address::unsigned(), Reg::unsigned()) -> ok | {error,Reason::atom()}.
+i2c_read_reg_16(Address,Reg) ->
+    call({?M_I2C_READ_REG_16,Address,Reg}).
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Write word to I2C device register on port 5
+%% @end
+%%--------------------------------------------------------------------
+-spec brickpi:i2c_write_reg_16(Address::unsigned(), Reg::unsigned(), Data::unsigned()) -> ok | {error,Reason::atom()}.
+i2c_write_reg_16(Address,Reg,Data) ->
+    call({?M_I2C_WRITE_REG_16,Address,Reg,Data}).
+
+
+%%--------------------------------------------------------------------
+%% @doc
 %% Initialize the sensors with the given values.
 %% @end
 %%--------------------------------------------------------------------
