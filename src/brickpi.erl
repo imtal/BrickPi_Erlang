@@ -51,9 +51,13 @@
 %%--------------------------------------------------------------------
 -spec brickpi:start() -> ok | {error,Reason::atom()}.
 start() ->
-    Pid = spawn(?MODULE,init,[self()]),
-    receive ok -> {ok,Pid} end.
-
+    case whereis(brickpi_driver) of
+        undefined ->
+            Pid = spawn(?MODULE,init,[self()]),
+            receive ok -> {ok,Pid} end;
+        _Other ->
+            {error,already_running}
+    end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Stops the BrickPi port driver
@@ -272,7 +276,7 @@ i2c_setup() ->
 %% Read from I2C device on port 5
 %% @end
 %%--------------------------------------------------------------------
--spec brickpi:i2c_read(Address::unsigned()) -> ok | {error,Reason::atom()}.
+-spec brickpi:i2c_read(Address::unsigned()) -> {ok,Value::unsigned()} | {error,Reason::atom()}.
 i2c_read(Address) ->
     call({?M_I2C_READ,Address}).
 
@@ -292,7 +296,7 @@ i2c_write(Address,Data) ->
 %% Read byte from I2C device register on port 5
 %% @end
 %%--------------------------------------------------------------------
--spec brickpi:i2c_read_reg_8(Address::unsigned(), Reg::unsigned()) -> ok | {error,Reason::atom()}.
+-spec brickpi:i2c_read_reg_8(Address::unsigned(), Reg::unsigned()) -> {ok,Value::unsigned()} | {error,Reason::atom()}.
 i2c_read_reg_8(Address,Reg) ->
     call({?M_I2C_READ_REG_8,Address,Reg}).
 
@@ -312,7 +316,7 @@ i2c_write_reg_8(Address,Reg,Data) ->
 %% Read word from I2C device register on port 5
 %% @end
 %%--------------------------------------------------------------------
--spec brickpi:i2c_read_reg_16(Address::unsigned(), Reg::unsigned()) -> ok | {error,Reason::atom()}.
+-spec brickpi:i2c_read_reg_16(Address::unsigned(), Reg::unsigned()) -> {ok,Value::unsigned()} | {error,Reason::atom()}.
 i2c_read_reg_16(Address,Reg) ->
     call({?M_I2C_READ_REG_16,Address,Reg}).
 
@@ -508,12 +512,32 @@ encode({Msg,Param1,Param2})         when Msg == ?M_GET_SENSOR_I2C_IN ->
 encode({Msg,Param1,Param2})         when Msg == ?M_CHANGE_ADDRESS ->
     <<$s,Msg:8,Param1:16,Param2:16,$e>>;
 %
+encode({Msg,Param1})                when Msg == ?M_I2C_READ ->
+    <<$s,Msg:8,Param1:8,$e>>;
+%
+encode({Msg,Param1,Param2})         when Msg == ?M_I2C_WRITE ->
+    <<$s,Msg:8,Param1:8,Param2:8,$e>>;
+%
+encode({Msg,Param1,Param2})         when Msg == ?M_I2C_READ_REG_8 ->
+    <<$s,Msg:8,Param1:8,Param2:8,$e>>;
+%
+encode({Msg,Param1,Param2})         when Msg == ?M_I2C_READ_REG_16 ->
+    <<$s,Msg:8,Param1:8,Param2:8,$e>>;
+%
+encode({Msg,Param1,Param2,Param3})         when Msg == ?M_I2C_WRITE_REG_8 ->
+    <<$s,Msg:8,Param1:8,Param2:8,Param3:8,$e>>;
+%
+encode({Msg,Param1,Param2,Param3})         when Msg == ?M_I2C_WRITE_REG_16 ->
+    <<$s,Msg:8,Param1:8,Param2:8,Param3:16,$e>>;
+%
 encode(_Other) ->
     exit(wrong_message_format).
 
 
 decode(<<?MSG_START:8,?R_OKAY:8,?MSG_END:8>>) ->
     ok;
+decode(<<?MSG_START:8,?R_BYTE:8,Value:8,?MSG_END:8>>) ->
+    {ok,Value};
 decode(<<?MSG_START:8,?R_SHORT:8,Value:16,?MSG_END:8>>) ->
     {ok,Value};
 decode(<<?MSG_START:8,?R_LONG:8,Value:32,?MSG_END:8>>) ->

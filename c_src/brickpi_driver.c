@@ -55,7 +55,7 @@ short read_byte() {
     uint8_t value;
     if (read(STDIN_FILENO,buffer,sizeof(uint8_t))<=0) unload();
     memcpy(&value,buffer,sizeof(uint8_t));
-    return ntohs(value);
+    return value;
 }
 short read_short() {
     uint16_t value;
@@ -82,22 +82,30 @@ send_ok() {
     write(STDOUT_FILENO,buffer,3);
 }
 
+send_value_byte(uint8_t value) {
+    buffer[0] = MSG_START;
+    buffer[1] = R_BYTE;
+    memcpy(buffer+2,&value,sizeof(uint8_t));
+    buffer[2+sizeof(uint8_t)] = MSG_END;
+    write(STDOUT_FILENO,buffer,3+sizeof(uint8_t));
+}
+
 send_value_short(uint16_t value) {
     buffer[0] = MSG_START;
     buffer[1] = R_SHORT;
     value = htons(value);
-    memcpy(buffer+2,&value,sizeof(short));
-    buffer[2+sizeof(short)] = MSG_END;
-    write(STDOUT_FILENO,buffer,3+sizeof(short));
+    memcpy(buffer+2,&value,sizeof(uint16_t));
+    buffer[2+sizeof(uint16_t)] = MSG_END;
+    write(STDOUT_FILENO,buffer,3+sizeof(uint16_t));
 }
 
 send_value_long(uint32_t value) {
     buffer[0] = MSG_START;
     buffer[1] = R_LONG;
     value = htonl(value);
-    memcpy(buffer+2,&value,sizeof(long));
-    buffer[2+sizeof(long)] = MSG_END;
-    write(STDOUT_FILENO,buffer,3+sizeof(long));
+    memcpy(buffer+2,&value,sizeof(uint32_t));
+    buffer[2+sizeof(uint32_t)] = MSG_END;
+    write(STDOUT_FILENO,buffer,3+sizeof(uint32_t));
 }
 
 send_value_data_8(char* data) {
@@ -384,11 +392,13 @@ receive_command() {
             }
             case M_I2C_SETUP: {
                 if (read_end()) {
-	                LOG("- Setup I2C port 5\r\n",port);
+	                LOG("- Setup I2C (port 5)\r\n");
 	                i2c_fd = open("/dev/i2c-1",O_RDWR);
 	                if (i2c_fd<0) {
+                            LOG("+ ERROR: %s\r\n",strerror(errno));
 	                    send_error(E_I2C_SETUP);
 	                } else {
+                            LOG("+ OKAY\r\n");
                             send_ok();
                         }
                 } else {
@@ -398,13 +408,15 @@ receive_command() {
             }
             case M_I2C_READ: {
                 short address,data;
-                address = read_short();
+                address = read_byte();
                 if (read_end()) {
-                    LOG("- Read from I2C device on port 5 with adress %02x\r\n",address);
+                    LOG("- Read from I2C device with adress %02x\r\n",address);
                     if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        LOG("+ ERROR: %n\r\n",strerror(errno));
                         send_error(E_I2C_COMMUNICATION);
                     } else {
                         data = i2c_smbus_read_byte(i2c_fd);
+                        LOG("+ OKAY\r\n");
                         send_value_short(data);
                     }
                 } else {
@@ -413,15 +425,17 @@ receive_command() {
                 break;
             }
             case M_I2C_WRITE: {
-                short address,data;
-                address = read_short();
-                data = read_short();
+                uint8_t address,data;
+                address = read_byte();
+                data = read_byte();
                 if (read_end()) {
-                    LOG("- Write to I2C device on port 5 with address %02x\r\n",address);
+                    LOG("- Write to I2C device with address %02x\r\n",address);
                     if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        LOG("+ ERROR: %n\r\n",strerror(errno));
                         send_error(E_I2C_COMMUNICATION);
                     } else {
                         i2c_smbus_write_byte(i2c_fd,data);
+                        LOG("+ OKAY\r\n");
                         send_ok();
                     }
                 } else {
@@ -430,16 +444,18 @@ receive_command() {
                 break;
             }
             case M_I2C_READ_REG_8: {
-                short address,reg,data;
-                address = read_short();
-                reg = read_short();
+                uint8_t address,reg,data;
+                address = read_byte();
+                reg = read_byte();
                 if (read_end()) {
-                    LOG("- Read byte from I2C device register %02x on port 5 with adress %02x\r\n",reg,address);
+                    LOG("- Read byte from I2C device register %02x with adress %02x\r\n",reg,address);
                     if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        LOG("+ ERROR: %n\r\n",strerror(errno));
                         send_error(E_I2C_COMMUNICATION);
                     } else {
                         data = i2c_smbus_read_byte_data(i2c_fd,reg);
-                        send_value_short(data);
+                        LOG("+ OKAY\r\n");
+                        send_value_byte(data);
                     }
                 } else {
                     send_error(E_PROTOCOL_ERROR);
@@ -448,15 +464,17 @@ receive_command() {
             }
             case M_I2C_WRITE_REG_8: {
                 short address,reg,data;
-                address = read_short();
-                reg = read_short();
-                data = read_short();
+                address = read_byte();
+                reg = read_byte();
+                data = read_byte();
                 if (read_end()) {
-                    LOG("- Write byte to I2C device register %02x on port 5 with address %02x\r\n",reg,address);
+                    LOG("- Write byte to I2C device register %02x with address %02x\r\n",reg,address);
                     if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        LOG("+ ERROR: %n\r\n",strerror(errno));
                         send_error(E_I2C_COMMUNICATION);
                     } else {
                         i2c_smbus_write_byte_data(i2c_fd,reg,data);
+                        LOG("+ OKAY\r\n");
                         send_ok();
                     }
                 } else {
@@ -466,11 +484,12 @@ receive_command() {
             }
             case M_I2C_READ_REG_16: {
                 short address,reg,data;
-                address = read_short();
-                reg = read_short();
+                address = read_byte();
+                reg = read_byte();
                 if (read_end()) {
                     LOG("- Read byte from I2C device register %02x on port 5 with adress %02x\r\n",reg,address);
                     if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        LOG("+ ERROR: %n\r\n",strerror(errno));
                         send_error(E_I2C_COMMUNICATION);
                     } else {
                         data = i2c_smbus_read_word_data(i2c_fd,reg);
@@ -483,12 +502,13 @@ receive_command() {
             }
             case M_I2C_WRITE_REG_16: {
                 short address,reg,data;
-                address = read_short();
-                reg = read_short();
+                address = read_byte();
+                reg = read_byte();
                 data = read_short();
                 if (read_end()) {
                     LOG("- Write byte to I2C device register %02x on port 5 with address %02x\r\n",reg,address);
                     if (ioctl(i2c_fd, I2C_SLAVE, address) < 0) {
+                        LOG("+ ERROR: %n\r\n",strerror(errno));
                         send_error(E_I2C_COMMUNICATION);
                     } else {
                         i2c_smbus_write_word_data(i2c_fd,reg,data);

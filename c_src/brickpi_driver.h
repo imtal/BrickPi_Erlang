@@ -1,5 +1,5 @@
 
-#define VERSION "0.81"
+#define VERSION "0.82"
 //#define SHOW_LOG 1
 
 typedef unsigned char byte;
@@ -50,6 +50,7 @@ typedef unsigned char byte;
 #define R_ERROR                       'E'
 #define R_LONG                        'L'
 #define R_SHORT                       'S'
+#define R_BYTE                        'B'
 #define R_DATA_8                      '7'
 #define R_DATA_16                     'F'
 

@@ -68,6 +68,7 @@
 -define(R_ERROR,                       $E).
 -define(R_LONG,                        $L).
 -define(R_SHORT,                       $S).
+-define(R_BYTE,                        $B).
 -define(R_DATA_8,                      $7).
 -define(R_DATA_16,                     $F).
 
