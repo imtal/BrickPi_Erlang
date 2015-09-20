@@ -1,6 +1,6 @@
 /*
- *  imtal<at>yolt.nl
- *  http://www.yolt.nl/
+ *  tjeerd<at>imtal.nl
+ *  http://www.imtal.nl/
  *  Created: December 27, 2013
  *  Updated: July 12, 2014
  *
@@ -392,12 +392,12 @@ receive_command() {
             }
             case M_I2C_SETUP: {
                 if (read_end()) {
-	                LOG("- Setup I2C (port 5)\r\n");
-	                i2c_fd = open("/dev/i2c-1",O_RDWR);
-	                if (i2c_fd<0) {
+                    LOG("- Setup I2C (port 5)\r\n");
+                    i2c_fd = open("/dev/i2c-1",O_RDWR);
+                    if (i2c_fd<0) {
                             LOG("+ ERROR: %s\r\n",strerror(errno));
-	                    send_error(E_I2C_SETUP);
-	                } else {
+                        send_error(E_I2C_SETUP);
+                    } else {
                             LOG("+ OKAY\r\n");
                             send_ok();
                         }

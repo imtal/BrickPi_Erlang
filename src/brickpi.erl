@@ -1,4 +1,4 @@
-%%% @author Tjeerd van der Laan <imtal@yolt.nl>
+%%% @author Tjeerd van der Laan <tjeerd@imtal.nl>
 %%% @copyright (C) 2014, Tjeerd van der Laan
 %%%
 %%% @doc
