@@ -25,7 +25,7 @@
 -export([start/0,stop/0,sleep/1]).
 -export([change_address/2,set_timeout/1]).
 -export([set_sensor_type/2,set_sensor_i2c_settings/3,get_sensor_value/1,get_sensor_ext/2]).
--export([set_sensor_i2c_devices/2,set_sensor_i2c_speed/2,set_sensor_i2c_address/3,set_sensor_i2c_write/3,set_sensor_i2c_read/3,set_sensor_i2c_out/3,get_sensor_i2c_in/2]).
+-export([i2c_setup/0,set_sensor_i2c_devices/2,set_sensor_i2c_speed/2,set_sensor_i2c_address/3,set_sensor_i2c_write/3,set_sensor_i2c_read/3,set_sensor_i2c_out/3,get_sensor_i2c_in/2]).
 -export([set_motor_enable/2,set_motor_speed/2,set_motor_offset/2,get_motor_encoder/1]).
 -export([setup/0,update/0,update/1,halt/0]).
 
@@ -34,6 +34,7 @@
             port = undefined,
             timeout = 20000,
             interval = infinity,
+            timer = none,
             monitors = []
         }).
 
@@ -49,7 +50,7 @@
 %% Starts the BrickPi port driver
 %% @end
 %%--------------------------------------------------------------------
--spec brickpi:start() -> ok | {error,Reason::atom()}.
+-spec brickpi:start() -> {ok,Pid::pid()} | {error,Reason::atom()}.
 start() ->
     case whereis(brickpi_driver) of
         undefined ->
@@ -406,9 +407,35 @@ init(Parent) ->
 
 loop(S) ->
     receive
+        update ->
+            call_driver(S#state.port,{?M_UPDATE},S#state.timeout),
+            F = fun(M) ->
+                    case call_driver(S#state.port,M#monitor.message,S#state.timeout) of
+                        {ok,Value} ->
+                            M#monitor.handler ! {M#monitor.type, M#monitor.port, Value};
+                        _Other ->
+                            M#monitor.handler ! {M#monitor.type, M#monitor.port, error}
+                    end
+                end,
+            lists:foreach(F,S#state.monitors),
+            loop(S);
+        {call, Caller, {interval,infinity}} ->
+            case timer:cancel(S) of
+                {ok,cancel} ->
+                    Caller ! {brickpi_driver, ok};
+                {error,Reason} ->
+                    Caller ! {brickpi_driver, {error,Reason}}
+            end,
+            loop(S#state{ timer=none, interval=infinity });
         {call, Caller, {interval,Interval}} ->
-            Caller ! {brickpi_driver, ok},
-            loop(S#state{ interval=Interval });
+            case timer:send_interval(Interval,update) of
+                {ok,Pid} ->
+                    Caller ! {brickpi_driver, ok},
+                    loop(S#state{ timer=Pid, interval=Interval });
+                {error,Reason} ->
+                    Caller ! {brickpi_driver, {error,Reason}},
+                    loop(S)
+            end;
         {call, Caller, {monitor,Type,Port,Msg,Handler}} ->
             M = #monitor{ type=Type, port=Port, message=Msg, handler=Handler },
             L = S#state.monitors,
@@ -427,19 +454,6 @@ loop(S) ->
             end;
         {'EXIT', _Port, Reason} ->
             exit({terminated,Reason})
-    after
-        S#state.interval ->
-            call_driver(S#state.port,{?M_UPDATE},S#state.timeout),
-            F = fun(M) ->
-                    case call_driver(S#state.port,M#monitor.message,S#state.timeout) of
-                        {ok,Value} ->
-                            M#monitor.handler ! {M#monitor.type, M#monitor.port, Value};
-                        _Other ->
-                            M#monitor.handler ! {M#monitor.type, M#monitor.port, error}
-                    end
-                end,
-            lists:foreach(F,S#state.monitors),
-            loop(S)
     end.
 
 call_driver(Port,Msg,Timeout) ->
@@ -556,7 +570,10 @@ decode(<<?MSG_START:8,?R_ERROR:8,Code:8,?MSG_END:8>>) ->
         ?E_PROTOCOL_ERROR     -> {error,protocol_error};
         ?E_BUFFER_OVERFLOW    -> {error,buffer_overflow};
         ?E_PARAMETER_OVERFLOW -> {error,parameter_overflow};
+        ?E_I2C_SETUP          -> {error,i2c_setup};
+        ?E_I2C_COMMUNICATION  -> {error,i2c_communication};
         Else                  -> {error,Else}
     end;
 decode(_Other) ->
+    io:format("~p~n",[_Other]),
     {error,bad_response}.
